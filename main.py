@@ -1,29 +1,42 @@
 import os
-import openai
+import sys
+
+from dotenv import load_dotenv
+
+import pipeline
+from llm_client import LLMCallError
 
 """
 Before submitting the assignment, describe here in a few sentences what you would have built next if you spent 2 more hours on this project:
 
+1, build a small offline eval set to catch regressions systematically 
+2, add OpenAI's Moderation API as an additional, non-prompted safety layer 
+3, build the feedback loop the README suggests (letting a user ask for changes to a story they already received)
 """
-
-def call_model(prompt: str, max_tokens=3000, temperature=0.1) -> str:
-    openai.api_key = os.getenv("OPENAI_API_KEY") # please use your own openai api key here.
-    resp = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        stream=False,
-        max_tokens=max_tokens,
-        temperature=temperature,
-    )
-    return resp.choices[0].message["content"]  # type: ignore
-
-example_requests = "A story about a girl named Alice and her best friend Bob, who happens to be a cat."
 
 
 def main():
+    load_dotenv()
+    if not os.getenv("OPENAI_API_KEY"):
+        print("OPENAI_API_KEY is not set. Copy .env.example to .env and add your key.", file=sys.stderr)
+        sys.exit(1)
+
+    debug = os.getenv("DEBUG") == "1"
+
+    def on_progress(message: str) -> None:
+        if debug:
+            print(f"[debug] {message}", file=sys.stderr)
+
     user_input = input("What kind of story do you want to hear? ")
-    response = call_model(user_input)
-    print(response)
+
+    try:
+        result = pipeline.run_pipeline(user_input, on_progress=on_progress)
+    except LLMCallError as e:
+        print(f"Sorry, something went wrong talking to the story service: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print()
+    print(result.final_story)
 
 
 if __name__ == "__main__":
