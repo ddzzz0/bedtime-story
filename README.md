@@ -81,7 +81,10 @@ python3 smoke_test.py
 
 Every request passes through four stages: a combined classifier + safety gate, a
 category-tailored generator, a rubric-based judge, and a bounded revision loop that feeds
-the judge's feedback back into the generator.
+the judge's feedback back into the generator. See system design diagram below. 
+
+<img width="777" height="526" alt="image" src="https://github.com/user-attachments/assets/b5edf8bd-5ba5-41cd-be0c-145891ee418b" />
+
 
 - **Classifier + Safety Gate** (`classifier.py`) — one LLM call that both picks a category
   (to tailor the generation prompt) and screens the request for anything inappropriate
